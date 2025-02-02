@@ -1,0 +1,28 @@
+;---------------------------------------------------------------------------
+;  MIDAS/Civil Text(MCT) File.
+;  Date : 2000/1/11
+;---------------------------------------------------------------------------
+
+*VERSION
+   9.5.0
+
+*UNIT    ; Unit System
+; FORCE, LENGTH, HEAT, TEMPER
+   KN   , M, BTU, F
+
+*PROJINFO    ; Project Information
+; PROJECT, REVISION, USER, EMAIL, ADDRESS, TEL, FAX, CLIENT, TITLE, ENGINEER, EDATE       ; One Line per Data
+; CHECK1, CDATE1, CHECK2, CDATE2, CHECK3, CDATE3, APPROVE, ADATE, COMMENT                 ; One Line per Data
+   USER=foo.bar@foomail.com
+   ADDRESS=FB
+
+*STRUCTYPE    ; Structure Type
+; iSTYP, iMASS, iSMAS, bMASSOFFSET, bSELFWEIGHT, GRAV, TEMPER, bALIGNBEAM, bALIGNSLAB, bROTRIGID
+     0, 1, 1, NO, YES, 9.806, 0, NO, NO, NO
+
+*REBAR-MATL-CODE    ; Rebar Material Code
+; CONC_CODE, CONC_MDB, SRC_CODE, SRC_MDB
+ ASTM19(RC), Grade 60, ASTM19(RC), Grade 60
+
+*NODE    ; Nodes
+; iNO, X, Y, Z

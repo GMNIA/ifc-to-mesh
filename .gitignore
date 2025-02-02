@@ -169,3 +169,14 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+# Project specific git ignore commands
+# Ignore everything inside the midas folder
+midas/*
+
+# But keep the folder itself
+!midas/.gitkeep
+
+# Ignore files
+merged_output.mct

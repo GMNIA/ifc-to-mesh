@@ -1,0 +1,82 @@
+
+*MATERIAL    ; Material
+; iMAT, TYPE, MNAME, SPHEAT, HEATCO, PLAST, TUNIT, bMASS, DAMPRATIO, [DATA1]           ; STEEL, CONC, USER
+; iMAT, TYPE, MNAME, SPHEAT, HEATCO, PLAST, TUNIT, bMASS, DAMPRATIO, [DATA2], [DATA2]  ; SRC
+; [DATA1] : 1, STANDARD, CODE/PRODUCT, DB, USEELAST, ELAST
+; [DATA1] : 2, ELAST, POISN, THERMAL, DEN, MASS
+; [DATA1] : 3, Ex, Ey, Ez, Tx, Ty, Tz, Sxy, Sxz, Syz, Pxy, Pxz, Pyz, DEN, MASS         ; Orthotropic
+; [DATA2] : 1, STANDARD, CODE/PRODUCT, DB, USEELAST, ELAST or 2, ELAST, POISN, THERMAL, DEN, MASS
+    1, CONC , Concrete          , 0, 0, , F, NO, 0.05, 1, EN(RC)     ,            , C30/37        , NO, 3.1938e+07
+    2, STEEL, S355              , 0, 0, , F, NO, 0.02, 1, EN05(S)    ,            , S355          , NO, 2.1e+08
+
+*MATL-COLOR
+; iMAT, W_R, W_G, W_B, HF_R, HF_G, HF_B, HE_R, HE_G, HE_B, bBLEND, FACT
+    1, 255,   0,   0,    0, 255,   0,    0,   0, 255,  NO, 0.5
+    2, 255,   0,   0,    0, 255,   0,    0,   0, 255,  NO, 0.5
+
+*THICKNESS    ; Thickness
+; iTHK, NAME, TYPE, bSAME, THIK-IN, THIK-OUT, bOFFSET, OFFTYPE, VALUE ; TYPE=VALUE
+; iTHK, TYPE, SUBTYPE, RPOS, WEIGHT                             ; TYPE=STIFFENED, SUBTYPE=VALUE
+;       SHAPE, THIK-IN, THIK-OUT, HU, HL                        ;      for yz section
+;       SHAPE, THIK-IN, THIK-OUT, HU, HL                        ;      for xz section
+; iTHK, TYPE, SUBTYPE, RPOS, PLATETHIK                          ; TYPE=STIFFENED, SUBTYPE=USER
+;       bRIB {, SHAPE, DIST, SIZE1, SIZE2, ..., SIZE6}          ;      for yz section
+;       bRIB {, SHAPE, DIST, SIZE2, SIZE2, ..., SIZE6}          ;      for xz section
+; iTHK, TYPE, SUBTYPE, RPOS, PLATETHIK, DBNAME                  ; TYPE=STIFFENED, SUBTYPE=DB
+;       bRIB {, SHAPE, DIST, SNAME}                             ;      for yz section
+;       bRIB {, SHAPE, DIST, SNAME}                             ;      for xz section
+    1, VALUE, 1, YES, 0.02, 0, YES, 1, 0.1
+
+*THIK-COLOR
+; iTHK, W_R, W_G, W_B, HF_R, HF_G, HF_B, HE_R, HE_G, HE_B, bBLEND, FACT
+    1, 255,   0,   0,    0, 255,   0,    0,   0, 255,  NO, 0.5
+
+
+*STLDCASE    ; Static Load Cases
+; LCNAME, LCTYPE, DESC
+   ML1  , D , load for modal analysis
+
+
+*LOADTOMASS    ; Load to Mass
+; DIR, bNODAL, bBEAM, bFLOOR, bPRES, GRAV
+; LCNAME1, FACTOR1, LCNAME2, FACTOR2, ...   ; from line 1
+   XYZ, YES, YES, YES, YES, 9.806
+   ML1, 1
+
+*USE-STLD, ML1
+
+*SELFWEIGHT    ; Self Weight
+; X, Y, Z, GROUP
+0, 0, -1, 
+
+; End of data for load case [ML1] -------------------------
+
+
+*LC-COLOR    ; Diagram Color for Load Case
+; ANAL, LCNAME, iR1(ALL), iG1(ALL), iB1(ALL), iR2(MIN), iG2(MIN), iB2(MIN), iR3(MAX), iG2(MAX), iB2(MAX)
+ ST, ML1, 192, 0, 192, 210, 210, 210, 255, 128, 0
+
+*EIGEN-CTRL    ; Eigenvalue Analysis Control
+; TYPE, iFREQ, iITER, iDIM, TOL, bMINMAX, FRMIN, FRMAX, bSTRUM   ; TYPE=EIGEN
+; TYPE, bINCNL, iGNUM                                            ; TYPE=RITZ(line 1)
+;       KIND1, CASE1/GROUND1, iNOG1, ...                         ; TYPE=RITZ(from line2)
+   LANCZOS, 5, 20, 1, 1e-10, NO, 0, 0, NO
+
+*DGN-MATL    ; Modify Steel(Concrete) Material
+; iMAT, TYPE, MNAME, [DATA1]                                    ; STEEL
+; iMAT, TYPE, MNAME, [DATA2], [R-DATA], FCI, bSERV, SHORT, LONG ; CONC
+; iMAT, TYPE, MNAME, [DATA3], [DATA2], [R-DATA]                 ; SRC
+; iMAT, TYPE, MNAME, [DATA5]                                    ; STEEL(None) & KSCE-ASD05
+; [DATA1] : 1, DB, CODE, NAME or 2, ELAST, POISN, FU, FY1, FY2, FY3, FY4
+;           FY5, FY6, AFT, AFT2, AFT3, FY, AFV, AFV2, AFV3
+; [DATA2] : 1, DB, CODE, NAME or 2, FC, CHK, LAMBDA, bFCI, FCI
+; [DATA3] : 1, DB, CODE, NAME or 2, ELAST, FU, FY1, FY2, FY3, FY4
+;              FY5, FY6, AFT, AFT2, AFT3, FY, AFV, AFV2, AFV3
+; [DATA4] : 1, DB, CODE, NAME or 2, FC
+; [DATA5] : 3, ELAST, POISN, AL1, AL2, AL3, AL4, AL5, AL6, AL7, AL8, AL9, AL10
+;              MIN1, MIN2, MIN3
+; [R-DATA]: RBCODE, RBMAIN, RBSUB, FY(R), FYS
+    1, CONC , Concrete          , 1, EN(RC)     ,            ,C30/37        , NO, 1, NO, 0, , , , 0, 0, 21000, NO, 0, 0,            ,            ,              , 0, NO, 1, , , , 0, 0, 0
+    2, STEEL, S355              , 1, EN05(S)    ,            ,S355          , 1, EN04(RC)   ,            ,               , , , , 0, 0,NO, 0.0000e+00,     0,, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0, 0.0000e+00,     0,, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0, 0.0000e+00,     0,, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,NO,
+
+*ENDDATA
