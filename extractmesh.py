@@ -66,10 +66,10 @@ def extract_mesh_from_ifc(ifc_file_path, output_dir):
 if __name__ == "__main__":
     # Path to the IFC file
     # ifc_file_path = "Ifc4_Revit_ARC.ifc"  # Replace with your IFC file path
-    ifc_file_path = "example-structure.ifc"  # Replace with your IFC file path
+    ifc_file_path = "examplestructure_test.ifc"  # Replace with your IFC file path
 
     # Output directory for mesh files
-    output_dir = "meshes"
+    output_dir = "midas"
 
     # Extract meshes
     extract_mesh_from_ifc(ifc_file_path, output_dir)

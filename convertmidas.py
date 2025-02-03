@@ -18,13 +18,23 @@ class MidasConverter:
         self._between_content = self._load_template("between.mct")
         self._back_content = self._load_template("back.mct")
 
-        # Node management to ensure unique numbering
-        self._mct_node_ids =  None
+        # Initialize node and element tracking attributes
+        self._mct_node_ids = None
         self._mct_element_ids = None
         self._mct_groups = None
 
     def _load_template(self, file_name):
-        """Loads the content of an MCT template file."""
+        """
+        Loads the content of an MCT template file.
+
+        Args:
+            file_name (str): Name of the template file.
+
+        Returns:
+            str: The content of the file, or an empty string if not found.
+        """
+
+        # Load the template file from path if exists
         if os.path.exists(file_name):
             with open(file_name, "r") as file:
                 return file.read()
@@ -32,7 +42,7 @@ class MidasConverter:
             print(f"Warning: Template file '{file_name}' not found.")
             return ""
 
-
+    
     def _convert_obj_to_mct_mesh(self, obj_file):
         """
         Converts an OBJ file to MCT format.
@@ -43,11 +53,9 @@ class MidasConverter:
         Returns:
             tuple: (mct_nodes, mct_elements)
         """
-
-        # Load mesh object
         nodes, elements = self._load_obj_as_mesh(obj_file)
 
-        # Initialize and define start node
+        # Initialize and define start node ID
         mct_nodes = ""
         if self._mct_node_ids:
             start_node_id = self._mct_node_ids[-1] + 1
@@ -60,7 +68,7 @@ class MidasConverter:
             mct_nodes += f"{idx}, {node[0]:.6f}, {node[1]:.6f}, {node[2]:.6f}\n"
             self._mct_node_ids.append(idx)
 
-        # Set the startin element id checking attribute state
+        # Set the starting element id checking attribute state
         mct_elements = ""
         if self._mct_element_ids:
             start_element_id = self._mct_element_ids[-1] + 1
@@ -85,13 +93,13 @@ class MidasConverter:
             else:
                 print(f"Warning: Skipping unsupported face with {len(element_nodes)} vertices")
 
-        # Save element groups
+        # Store group information
         group_dictionary = {
-                'start_node_id': start_node_id,
-                'end_node_id': self._mct_node_ids[-1],
-                'start_element_id': start_element_id,
-                'end_element_id': self._mct_element_ids[-1],
-            }
+            'start_node_id': start_node_id,
+            'end_node_id': self._mct_node_ids[-1],
+            'start_element_id': start_element_id,
+            'end_element_id': self._mct_element_ids[-1],
+        }
         if self._mct_groups:
             self._mct_groups.append(group_dictionary)
         else:
@@ -100,51 +108,38 @@ class MidasConverter:
 
 
     def _convert_groups_to_mct(self):
-        if self._mct_groups:
-            mct_group_text = "*GROUP    ; Group\n"
-            mct_group_text += "; NAME, NODE_LIST, ELEM_LIST, PLANE_TYPE\n"
-            for group_id, group in enumerate(self._mct_groups, start=1):
-                mct_group_text += f'Group{group_id}, {group["start_node_id"]}to{group["end_node_id"]}, '
-                mct_group_text += f'{group["start_element_id"]}to{group["end_element_id"]}\n'
-            mct_group_text += '\n'
-            return mct_group_text
-        else:
-            return ""
-
-
-    def _compose_mct_content(self, mct_nodes, mct_elements, mct_groups):
         """
-        Composes the full MCT content from the given mesh data.
-
-        Args:
-            mct_nodes (str): Nodes section in MCT format.
-            mct_elements (str): Elements section in MCT format.
+        Converts stored groups into MCT format.
 
         Returns:
-            str: The generated MCT content as a string.
+            str: The MCT formatted group definition.
         """
-        mct_content = self._header_content
-        mct_content += mct_nodes
-        mct_content += self._between_content
-        mct_content += mct_elements
-        mct_content += mct_groups
-        mct_content += self._back_content
-        return mct_content
+
+        # Write strings in Midas from defined groups
+        if self._mct_groups:
+            mct_group_text = "\n*GROUP    ; Group\n" \
+                             "; NAME, NODE_LIST, ELEM_LIST, PLANE_TYPE\n"
+            for group_id, group in enumerate(self._mct_groups, start=1):
+                mct_group_text += f'Group{group_id}, {group["start_node_id"]}to{group["end_node_id"]}, '
+                mct_group_text += f'{group["start_element_id"]}to{group["end_element_id"]}, 0\n'
+            return mct_group_text + '\n'
+        return ""
+
+    
+    def _compose_mct_content(self, mct_nodes, mct_elements, mct_groups):
+        """
+        Composes the full MCT content from different sections.
+        """
+        return self._header_content + mct_nodes + self._between_content + mct_elements + mct_groups + self._back_content
 
 
     def write_all_meshes_into_one_mct(self, output_file):
         """
-        Converts all OBJ files in the work directory into a single MCT file.
-
-        Args:
-            output_file (str): The final MCT file path.
+        Converts all OBJ files in the working directory into a single MCT file.
         """
-        print("\nMerging all OBJ files into one MCT file...")
-
-        all_mct_nodes = ""
-        all_mct_elements = ""
-        self._mct_node_ids =  []
-        self._mct_element_ids = []
+        all_mct_nodes, all_mct_elements = "", ""
+        self._mct_node_ids, self._mct_element_ids = [], []
+        self._mct_groups = []
         for file_name in os.listdir(self._work_dir):
             if file_name.endswith(".obj"):
                 obj_file_path = os.path.join(self._work_dir, file_name)
@@ -152,7 +147,6 @@ class MidasConverter:
                 all_mct_nodes += mct_nodes
                 all_mct_elements += mct_elements
         mct_groups = self._convert_groups_to_mct()
-
         mct_content = self._compose_mct_content(all_mct_nodes, all_mct_elements, mct_groups)
         self.write_mct_file(output_file, mct_content)
         print(f"All meshes merged into: {output_file}")
@@ -166,6 +160,7 @@ class MidasConverter:
 
         for file_name in os.listdir(self._work_dir):
             if file_name.endswith(".obj"):
+                self._mct_groups = []
                 obj_file_path = os.path.join(self._work_dir, file_name)
                 mct_nodes, mct_elements = self._convert_obj_to_mct_mesh(obj_file_path)
                 mct_content = self._compose_mct_content(mct_nodes, mct_elements, "")
@@ -175,9 +170,13 @@ class MidasConverter:
 
 
     def write_mct_file(self, output_file_path, mct_content):
+        """
+        Writes the generated MCT content to a file.
+        """
         with open(output_file_path, "w") as mct_file:
             mct_file.write(mct_content)
         print(f"MCT file saved: {output_file_path}")
+
 
 
     def _load_obj_as_mesh(self, file_path):
@@ -216,21 +215,5 @@ class MidasConverter:
 if __name__ == "__main__":
     work_directory = "midas"
     converter = MidasConverter(work_directory)
-
-    # Convert all OBJ files into separate MCT files
-    # converter.write_all_meshes_separately()
-
-    # Merge all OBJ files into one MCT file
+    converter.write_all_meshes_separately()
     converter.write_all_meshes_into_one_mct("merged_output.mct")
-
-# *GROUP    ; Group
-# ; NAME, NODE_LIST, ELEM_LIST, PLANE_TYPE
-#    appoggi   , 1to4, , 0
-#    mezzo_shell, , 6 7, 0
-#    lineaNodi1, 6 7 13, , 0
-#    plate + nodi                           , 6 7 10to13, 8 9, 0
-#    misto plate beam nodi ABCDEFGHIJKLMNOPQRSTUWXYVZ, 2 3 6 7 10to13, 3 4 7 8 9, 0
-#    misto plate beam nodi ABCDEFGHIJKLMNOPQRSTUWXYVZ, 2 3 6 7 10to13, 3 4 8 9, 0
-#    misto plate beam nodi ABCDEFGHIJKLMNOPQRSTUWXYVZ, 2 3 6 7 10to13, 3 4 8 9, 0
-#    solo beam , , 3 4, 0
-#    telaio NOME LUNGHISSIM0ABCDEFGHIJKLMNOPQRSTUWXYVZ    ,
